@@ -79,50 +79,55 @@ const createPlace = async (req, res, next) => {
   try {
     coordinates = await getCoordsForAdress(address);
   } catch (error) {
+    console.log(error);
     return next(error);
   }
-
   const createdPlace = new Place({
     title,
     description,
     address,
     location: coordinates,
-    image: 'https://i.redd.it/9w9wo4778k261.png',
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/400px-Empire_State_Building_%28aerial_view%29.jpg', // => File Upload module, will be replaced with real image url
     creator,
   });
 
   let user;
-
   try {
     user = await User.findById(creator);
-  } catch (error) {
-    const err = new HttpError(' creating place fail, plase try again', 500);
-    return next(err);
+  } catch (err) {
+    const error = new HttpError(
+      'Creating place failed, please try again.',
+      500
+    );
+    return next(error);
   }
-  console.log(user);
 
   if (!user) {
-    const err = new HttpError('could not fin user for provided id', 404);
-
-    return next(err);
+    const error = new HttpError('Could not find user for provided id.', 404);
+    return next(error);
   }
 
-  // console.log(createPlace.id);
+  console.log(user);
+
   try {
-    // await createdPlace.save();
     const sess = await mongoose.startSession();
     sess.startTransaction();
     await createdPlace.save({ session: sess });
     user.places.push(createdPlace);
     await user.save({ session: sess });
     await sess.commitTransaction();
-  } catch (error) {
-    const err = new HttpError('createing place failed, place try again', 500);
-    return next(err);
+  } catch (err) {
+    const error = new HttpError(
+      'Creating place failed, please try again.',
+      500
+    );
+    return next(error);
   }
 
   res.status(201).json({ place: createdPlace });
 };
+
 const updatePlace = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
