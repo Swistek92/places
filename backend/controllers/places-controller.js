@@ -1,3 +1,4 @@
+const fs = require('fs');
 const HttpError = require('../models/http-error');
 const uuid = require('uuid').v4;
 const mongoose = require('mongoose');
@@ -87,8 +88,7 @@ const createPlace = async (req, res, next) => {
     description,
     address,
     location: coordinates,
-    image:
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/400px-Empire_State_Building_%28aerial_view%29.jpg', // => File Upload module, will be replaced with real image url
+    image: req.file.path,
     creator,
   });
 
@@ -111,19 +111,17 @@ const createPlace = async (req, res, next) => {
   console.log(user);
 
   try {
-    console.log('done 1');
     const sess = await mongoose.startSession();
-    console.log('done 2');
+
     sess.startTransaction();
-    console.log('done 3');
+
     await createdPlace.save({ session: sess });
-    console.log('done 4');
+
     user.places.push(createdPlace);
-    console.log('done 5');
+
     await user.save({ session: sess, validateModifiedOnly: true });
-    console.log('done 6');
+
     await sess.commitTransaction();
-    console.log('done 7');
   } catch (err) {
     console.log('err ', err);
     const error = new HttpError(
@@ -204,6 +202,8 @@ const deletePlace = async (req, res, next) => {
     return next(err);
   }
 
+  const imagePath = place.image;
+
   try {
     // await place.remove();
     const sess = await mongoose.startSession();
@@ -227,6 +227,11 @@ const deletePlace = async (req, res, next) => {
   // DUMMY_PLACES = DUMMY_PLACES.filter((p) => {
   //   return p.id !== placeId;
   // });
+
+  fs.unlink(imagePath, (err) => {
+    console.log(err);
+  });
+
   res.status(200).json({ message: 'Delete place' });
 };
 

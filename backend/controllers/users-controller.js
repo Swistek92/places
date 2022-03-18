@@ -78,8 +78,7 @@ const signup = async (req, res, next) => {
   const createdUser = new User({
     name,
     email,
-    image:
-      'https://ocdn.eu/images/pulscms/MTM7MDA_/83fe47bdfb59821c15b3f7d3f08a1d4f.jpg',
+    image: req.file.path,
     password,
     places: [],
   });
